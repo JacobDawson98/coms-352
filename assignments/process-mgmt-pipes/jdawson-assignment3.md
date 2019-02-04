@@ -129,4 +129,4 @@ int main(void) {
   * compute the sum of all the integers it has received, and
   * send the result to the child process using another pipe.
 * When the child process receives the result, it displays the result on screen and
-terminates
+  terminates
