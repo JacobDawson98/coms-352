@@ -32,6 +32,7 @@ assigned a unique PID by the system.
 
 **Question 4**: Combine `ps` with `grep` to get the PID of a process (e.g., FireFox). Then,
             use the `kill` command to send a SIGTERM signal to that process.
+* `ps -ef | grep firefox | grep -v grep | awk '{print $2}' | xargs kill -9`
 
 # 2 Fork
 System call `fork()` is used to create processes. It takes no arguments and returns a process
