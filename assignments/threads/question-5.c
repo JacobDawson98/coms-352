@@ -1,4 +1,4 @@
-/* Compile with gcc question-5.c -o question-5 -pthread */
+/* Compile with gcc question-5.c -o question-5.out -pthread */
 #include <stdio.h>
 #include <stdlib.h>
 #include <pthread.h>

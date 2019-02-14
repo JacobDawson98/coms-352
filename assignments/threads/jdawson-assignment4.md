@@ -37,7 +37,7 @@
   fork();
   ```
   a. How many unique processes are created?
-  * 3
+  * 6
   b. How many unique threads are created?
   * 2
 
