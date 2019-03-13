@@ -1,7 +1,8 @@
+/* Compile with gcc posix-threads.c -o t.out -lm -pthread */
+#include <math.h>
+#include <pthread.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <math.h>
-#include <stdbool.h>
 
 
 int _prepare_file(FILE *input) {
@@ -46,21 +47,19 @@ void swap(int *left, int *right) {
 }
 
 
-void sortByIncreasing(int length, int arr[length]) {
+/* sortType = 0 means sort by decreasing: greatest values -> smallest values */
+/* sortType = 1 means sort by increasing: smallets values -> greatest values */
+void sort(int length, int arr[length], int sortType) {
     for(int i = 0 ; i < length - 1; ++i) {
         for(int j = 0; j < length - i - 1; ++j) {
-            if(arr[j] > arr[j + 1]) {
-                swap(&arr[j], &arr[j + 1]);
-            }
-        }
-    }
-}
-
-void sortByDecreasing(int length, int arr[length]) {
-    for(int i = 0 ; i < length - 1; ++i) {
-        for(int j = 0; j < length - i - 1; ++j) {
-            if(arr[j] < arr[j + 1]) {
-                swap(&arr[j], &arr[j + 1]);
+            if(sortType == 0) {
+                if(arr[j] < arr[j + 1]) {
+                    swap(&arr[j], &arr[j + 1]);
+                }
+            } else {
+                if(arr[j] > arr[j + 1]) {
+                    swap(&arr[j], &arr[j + 1]);
+                }
             }
         }
     }
