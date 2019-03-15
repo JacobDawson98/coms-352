@@ -1,5 +1,3 @@
-/* Compile with gcc posix-threads.c -o t.out -lm -pthread */
-
 /* Author: Jacob Dawson */
 /* COM S 352 Project 1 */
 
@@ -8,21 +6,29 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <stdlib.h>
+#include <vector>
 
 using namespace std;
 
 extern void *sort(void *arguments);
-int squaredTotal;
+int squaredTotal, numSorted, phase;
+vector<bool> threadsStatus;
+pthread_mutex_t lock;
 
 struct sort_arguments {
+    int id;
     int length;
-    /* pass in row or col to work on */
+    vector<bool> boolVector;
     int** arr;
 };
 
 
 /* Given a file, open the file, if there is an error opening the file, exit. Else, rewind */
 /* to the beginning of the file */
+/* Parameters: */
+    /* FILE *input - file to validate */
+/* Returns: */
+    /* 0 or EXIT_FAILURE, returns EXIT_FAILURE if an error occured */
 int _prepare_file(FILE *input) {
     if(!input) {
         printf("Error opening file.\n");
@@ -34,6 +40,10 @@ int _prepare_file(FILE *input) {
 
 
 /* Given a file, return the number of ints a file */
+/* Parameters: */
+    /* FILE *input - File to read values from */
+/* Returns: */
+    /* int numItems - The number of integers in the file */
 int get_num_ints(FILE *input) {
     _prepare_file(input);
     int temp = 0;
@@ -47,6 +57,9 @@ int get_num_ints(FILE *input) {
 
 /* Given a file, empty 2d array, and the sqrt of the num vals to enter in the array, */
 /* Populate the 2d array */
+/* Parameters: */
+    /* int* arr[squaredTotal] - array to populate values from file */
+    /* FILE* input - the opened file to read values from */
 void populate_array(int* arr[squaredTotal], FILE *input) {
     _prepare_file(input);
     for(int row = 0; row < squaredTotal; ++row) {
@@ -57,11 +70,16 @@ void populate_array(int* arr[squaredTotal], FILE *input) {
 }
 
 
+/* Swap two integers */
+/* Parameters: */
+/*     int *left - first of two integers to swap */
+/*     int *right - second of two integers to swap */
 void swap(int *left, int *right) {
     int temp = *left;
     *left = *right;
     *right = temp;
 }
+
 
 /* Used to validate if a 2d array is sorted properly by shearsort standards. */
 /* Parameters: */
@@ -96,27 +114,67 @@ bool is_sorted(int* arr[squaredTotal]) {
 }
 
 
-/* sortType = 0 means sort by decreasing: greatest values -> smallest values */
-/* sortType = 1 means sort by increasing: smallets values -> greatest values */
+void sort_row(int rowToSort, int** arr) {
+    for(int row = 0; row < squaredTotal - 1; ++row) {
+        for(int col = 0; col < squaredTotal - row - 1; ++col) {
+            if(rowToSort % 2 == 0) {
+                if(arr[rowToSort][col] > arr[rowToSort][col + 1]) {
+                    swap(arr[rowToSort][col], arr[rowToSort][col + 1]);
+                }
+            } else {
+                if(arr[rowToSort][col] < arr[rowToSort][col + 1]) {
+                    swap(arr[rowToSort][col], arr[rowToSort][col + 1]);
+                }
+            }
+        }
+    }
+}
+
+
+void sort_col(int colToSort, int** arr) {
+    for(int row = 0; row < squaredTotal - 1; ++row) {
+        for(int col = 0; col < squaredTotal - row - 1; ++row) {
+            if(arr[col][colToSort] > arr[col + 1][colToSort]) {
+                swap(arr[col][colToSort], arr[col][colToSort]);
+            }
+        }
+    }
+}
+
+
 void *sort(void *arguments) {
-    /* struct sort_arguments *args = (struct sort_arguments *)arguments; */
-    /* int sortType = 0; */
-    /* for(int i = 0 ; i < args -> length - 1; ++i) { */
-    /*     for(int j = 0; j < args -> length - i - 1; ++j) { */
-    /*         if(sortType == 0) { */
-    /*             if(args -> arr[j] < args -> arr[j + 1]) { */
-    /*                 swap(&args -> arr[j], &args -> arr[j + 1]); */
-    /*             } */
-    /*         } else { */
-    /*             if(args -> arr[j] > args -> arr[j + 1]) { */
-    /*                 swap(&args -> arr[j], &args -> arr[j + 1]); */
-    /*             } */
-    /*         } */
-    /*     } */
-    /* } */
+    printf("CALLING SORT FUNCTION"); // not printing
+    struct sort_arguments *args = (struct sort_arguments *)arguments;
+    pthread_mutex_lock(&lock);
+    if(phase % 2 == 0) {
+        sort_row(args -> id, args -> arr);
+    } else {
+        sort_col(args -> id, args -> arr);
+    }
+    threadsStatus[args -> id] = true;
+    pthread_mutex_unlock(&lock);
     pthread_exit(NULL);
 }
 
+
+/* Returns true if all values in vector are true */
+/* Parameters: */
+/*     vector<bool> v - Vector to check values of */
+/* Returns: */
+/*     bool - true if all values are true, false otherwise */
+bool threads_complete(vector<bool> v) {
+    for(int i = 0; i < v.size(); ++i) {
+        if(v[i] == false) {
+            return false;
+        }
+    }
+    return true;
+}
+
+
+/* Prints the values in a 2d array pictorially */
+/* Parameters: */
+/*     int* arr[squaredTotal] - The array to print the values of */
 void print_array(int* arr[squaredTotal]) {
     printf("Squared total: %d\n", squaredTotal);
     for(int row = 0; row < squaredTotal; ++row) {
@@ -146,13 +204,15 @@ int main(int argc, char *argv[]) {
     print_array(arrToSort);
 
     /* Create n amount of threads */
+    threadsStatus.resize(squaredTotal);
+    fill(threadsStatus.begin(), threadsStatus.end(), false);
     struct sort_arguments args;
     args.length = squaredTotal;
-    pthread_mutex_t lock;
     pthread_mutex_init(&lock, NULL);
-    pthread_t threads[squaredTotal];
+    pthread_t threads[squaredTotal]; // might not need, could use var in for loop
     for(int curThread = 0; curThread < squaredTotal; ++curThread) {
         args.arr = arrToSort;
+        args.id = curThread;
         if((pthread_create(&threads[curThread], NULL, &sort, (void *)&args)) != 0) {
             printf("Error creating thread number: %d\n", curThread);
             return EXIT_FAILURE;
@@ -160,9 +220,16 @@ int main(int argc, char *argv[]) {
     }
 
     /* Sort until the array is sorted properly */
+    phase = 0;
     while(!is_sorted(arrToSort)) {
-
+        numSorted = 0;
+        while(!threads_complete(threadsStatus)) {}
+        ++phase;
+        printf("Phase %d\n", phase);
+        print_array(arrToSort);
+        fill(threadsStatus.begin(), threadsStatus.end(), false);
     }
+    pthread_mutex_destroy(&lock);
 
     return EXIT_SUCCESS;
 }
