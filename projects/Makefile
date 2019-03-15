@@ -1,9 +1,9 @@
 make:
-	gcc posix-threads.c -o posix-threads.out -lm -pthread
+	g++ posix-threads.cpp -o posix-threads.out -pthread
 
 clean:
 	rm -f posix-threads.out
 
 run:
-	gcc posix-threads.c -o posix-threads.out -lm -pthread
+	g++ posix-threads.cpp -o posix-threads.out -pthread
 	./posix-threads.out
