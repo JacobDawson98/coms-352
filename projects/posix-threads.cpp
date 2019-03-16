@@ -25,11 +25,11 @@ pthread_mutex_t mutex_lock;
 pthread_cond_t controlVar;
 
 
-/* Given a file, return the number of ints a file */
+/* Given a filename, return the number of ints a file */
 /* Parameters: */
-    /* FILE *input - File to read values from */
+    /* string filename - Name of file to read values from */
 /* Returns: */
-    /* int numItems - The number of integers in the file */
+    /* int numInts - The number of integers in the file */
 int get_num_ints(string filename) {
     ifstream infile(filename);
     string currentLine;
@@ -45,11 +45,11 @@ int get_num_ints(string filename) {
 }
 
 
-/* Given a file, empty 2d array, and the sqrt of the num vals to enter in the array, */
-/* Populate the 2d array */
+/* Given a filename, and the sqrt of the num vals to enter in the matrix, */
+/* Populate the martix */
 /* Parameters: */
-    /* int* arr[squaredTotal] - array to populate values from file */
-    /* FILE* input - the opened file to read values from */
+    /* stringname filename - the opened file to read values from */
+    /* int width - the width of the matrix */
 void populate_matrix(string filename, int width) {
     ifstream infile(filename);
     string currentLine;
@@ -76,7 +76,7 @@ void swap(int *left, int *right) {
 }
 
 
-/* Used to validate if a 2d array is sorted properly by shearsort standards. */
+/* Used to validate if a matrix is sorted properly by shearsort standards. */
 /* Parameters: */
 /*     int dimension - the size of row or col */
 /*     int arr[dimension][dimension] - the 2d square array to validate */
@@ -109,6 +109,9 @@ bool is_sorted(matrix m) {
 }
 
 
+/* Sort a row by shearsort standards */
+/* parameters: */
+/*     int rowToSort - the specific row to sort in the global matrix */
 void sort_row(int rowToSort) {
     for(int row = 0; row < squaredTotal - 1; ++row) {
         for(int col = 0; col < squaredTotal - row - 1; ++col) {
@@ -126,6 +129,9 @@ void sort_row(int rowToSort) {
 }
 
 
+/* Sort a col by shearsort standards */
+/* parameters: */
+/*     int colToSort - the specific col to sort in the global matrix */
 void sort_col(int colToSort) {
     for(int row = 0; row < squaredTotal - 1; ++row) {
         for(int col = 0; col < squaredTotal - row - 1; ++col) {
@@ -137,29 +143,25 @@ void sort_col(int colToSort) {
 }
 
 
-/* Prints the values in a 2d array pictorially */
+/* Prints the values in a matrix pictorially */
 /* Parameters: */
-/*     int* arr[squaredTotal] - The array to print the values of */
+/*     matrix m - The matrix to print the values of */
 void print_matrix(matrix m) {
     matrix::iterator row;
     vector<int>::iterator col;
     for(int row = 0; row < squaredTotal; ++row) {
-        for(int col = 0; col < squaredTotal; ++col) {
-            cout << m[row][col] << " ,";
+        for(int col = 0; col < squaredTotal - 1; ++col) {
+            cout << m[row][col] << ", ";
         }
-        cout << "\n";
+        cout << m[row][squaredTotal - 1] << "\n";
     }
-    printf("\n");
+    cout << "\n";
 }
 
 
-void print_vector(vector<bool> v) {
-    for(vector<bool>::const_iterator i = v.begin(); i!= v.end(); ++i) {
-        cout << *i << ' ';
-    }
-}
-
-
+/* Sorts a matrix using threads */
+/* Parameters: */
+/*     void* arg - Should be passed in of type long, the threadId */
 void *sort(void* arg) {
     long temp = (long)arg;
     int id = (int)temp;
@@ -200,13 +202,13 @@ int main(int argc, char *argv[]) {
 
     /* Allocate space for the 2d array */
     populate_matrix(filename, squaredTotal);
-    printf("Populated array: \n");
+    cout << "\nPopulated matrix: \n";
     print_matrix(matrixToSort);
 
     /* Create n amount of threads */
     threadsStatus.resize(squaredTotal);
     fill(threadsStatus.begin(), threadsStatus.end(), false);
-    pthread_t threads[squaredTotal]; // might not need, could use var in for loop
+    pthread_t threads[squaredTotal];
     pthread_mutex_init(&mutex_lock, NULL);
     pthread_cond_init(&controlVar, NULL);
     for(long curThread = 0; curThread < squaredTotal; ++curThread) {
@@ -220,7 +222,7 @@ int main(int argc, char *argv[]) {
     phase = 1;
     while(!is_sorted(matrixToSort)) {
         while(!threads_complete(threadsStatus)) {}
-        printf("Phase %d\n", phase);
+        cout << "Phase: " << phase << "\n";
         ++phase;
         print_matrix(matrixToSort);
         fill(threadsStatus.begin(), threadsStatus.end(), false);
@@ -232,10 +234,11 @@ int main(int argc, char *argv[]) {
     pthread_mutex_lock(&mutex_lock);
     pthread_cond_broadcast(&controlVar);
     pthread_mutex_unlock(&mutex_lock);
+
+    /* Wait for all threads to complete */
     for(int i = 0; i < squaredTotal; ++i) {
         pthread_join(threads[i], NULL);
     }
-
     pthread_mutex_destroy(&mutex_lock);
 
     return EXIT_SUCCESS;

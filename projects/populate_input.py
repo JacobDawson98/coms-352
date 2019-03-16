@@ -13,6 +13,8 @@ with open('input.txt', 'a') as f:
         num_rows_cols = randint(0, 300)
     for num in range(num_rows_cols):
         randy = randint(1, 100)
-        print(randy)
-        f.write(str(randy) + ' ')
+        if num % sqrt(num_rows_cols) == 0 and num != 0:
+            f.write(str(randy) + '\n')
+        else:
+            f.write(str(randy) + ' ')
     print('Number of ints entered:', num_rows_cols)
