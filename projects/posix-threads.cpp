@@ -1,6 +1,7 @@
 /* Author: Jacob Dawson */
 /* COM S 352 Project 1 */
 
+#include <iostream>
 #include <math.h>
 #include <pthread.h>
 #include <stdio.h>
@@ -13,7 +14,7 @@ using namespace std;
 extern void *sort(void *arguments);
 int squaredTotal, numSorted, phase;
 vector<bool> threadsStatus;
-pthread_mutex_t lock;
+pthread_mutex_t mutex_lock;
 
 struct sort_arguments {
     int id;
@@ -60,10 +61,10 @@ int get_num_ints(FILE *input) {
 /* Parameters: */
     /* int* arr[squaredTotal] - array to populate values from file */
     /* FILE* input - the opened file to read values from */
-void populate_array(int* arr[squaredTotal], FILE *input) {
+void populate_array(int dimension, int** arr, FILE *input) {
     _prepare_file(input);
-    for(int row = 0; row < squaredTotal; ++row) {
-        for(int col = 0; col < squaredTotal; ++col) {
+    for(int row = 0; row < dimension; ++row) {
+        for(int col = 0; col < dimension; ++col) {
             fscanf(input, "%d", &arr[row][col]);
         }
     }
@@ -87,18 +88,18 @@ void swap(int *left, int *right) {
 /*     int arr[dimension][dimension] - the 2d square array to validate */
 /* Returns: */
 /*     bool - true if the array is sorted properly, false otherwise */
-bool is_sorted(int* arr[squaredTotal]) {
+bool is_sorted(int dimension, int** arr) {
     /* Are the columns sorted? */
-    for(int row = 0; row < squaredTotal - 1; ++row) {
-        for(int col = 0; col < squaredTotal; ++col) {
+    for(int row = 0; row < dimension - 1; ++row) {
+        for(int col = 0; col < dimension; ++col) {
             if(arr[row][col] > arr[row + 1][col]) {
                 return false;
             }
         }
     }
     /* Are the rows sorted? */
-    for(int row = 0; row < squaredTotal; ++row) {
-        for(int col = 0; col < squaredTotal - 1; ++col) {
+    for(int row = 0; row < dimension; ++row) {
+        for(int col = 0; col < dimension - 1; ++col) {
             if(row % 2 == 0) {
                 if(arr[row][col] > arr[row][col + 1]) {
                     return false;
@@ -145,14 +146,14 @@ void sort_col(int colToSort, int** arr) {
 void *sort(void *arguments) {
     printf("CALLING SORT FUNCTION"); // not printing
     struct sort_arguments *args = (struct sort_arguments *)arguments;
-    pthread_mutex_lock(&lock);
+    pthread_mutex_lock(&mutex_lock);
     if(phase % 2 == 0) {
         sort_row(args -> id, args -> arr);
     } else {
         sort_col(args -> id, args -> arr);
     }
     threadsStatus[args -> id] = true;
-    pthread_mutex_unlock(&lock);
+    pthread_mutex_unlock(&mutex_lock);
     pthread_exit(NULL);
 }
 
@@ -172,10 +173,17 @@ bool threads_complete(vector<bool> v) {
 }
 
 
+void print_vector(vector<bool> v) {
+    for(vector<bool>::const_iterator i = v.begin(); i!= v.end(); ++i) {
+        cout << *i << ' ';
+    }
+}
+
+
 /* Prints the values in a 2d array pictorially */
 /* Parameters: */
 /*     int* arr[squaredTotal] - The array to print the values of */
-void print_array(int* arr[squaredTotal]) {
+void print_array(int** arr) {
     printf("Squared total: %d\n", squaredTotal);
     for(int row = 0; row < squaredTotal; ++row) {
         for(int col = 0; col < squaredTotal; ++col) {
@@ -184,6 +192,7 @@ void print_array(int* arr[squaredTotal]) {
         printf("\n");
     }
     printf("\n");
+    cout << "AT THE END OF PRINT ARRAY";
 }
 
 
@@ -199,16 +208,17 @@ int main(int argc, char *argv[]) {
         arrToSort[col] = new int[squaredTotal];
     }
 
-    populate_array(arrToSort, input);
+    populate_array(squaredTotal, arrToSort, input);
     printf("Populated array: \n");
     print_array(arrToSort);
 
     /* Create n amount of threads */
     threadsStatus.resize(squaredTotal);
     fill(threadsStatus.begin(), threadsStatus.end(), false);
+    print_vector(threadsStatus);
     struct sort_arguments args;
     args.length = squaredTotal;
-    pthread_mutex_init(&lock, NULL);
+    pthread_mutex_init(&mutex_lock, NULL);
     pthread_t threads[squaredTotal]; // might not need, could use var in for loop
     for(int curThread = 0; curThread < squaredTotal; ++curThread) {
         args.arr = arrToSort;
@@ -221,7 +231,7 @@ int main(int argc, char *argv[]) {
 
     /* Sort until the array is sorted properly */
     phase = 0;
-    while(!is_sorted(arrToSort)) {
+    while(!is_sorted(squaredTotal, arrToSort)) {
         numSorted = 0;
         while(!threads_complete(threadsStatus)) {}
         ++phase;
@@ -229,7 +239,7 @@ int main(int argc, char *argv[]) {
         print_array(arrToSort);
         fill(threadsStatus.begin(), threadsStatus.end(), false);
     }
-    pthread_mutex_destroy(&lock);
+    pthread_mutex_destroy(&mutex_lock);
 
     return EXIT_SUCCESS;
 }
