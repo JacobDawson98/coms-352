@@ -16,36 +16,13 @@
 using namespace std;
 typedef vector<vector<int> > matrix;
 
-extern void *sort(void *arguments);
-int squaredTotal, numSorted, phase;
+extern void *sort(void *arg);
+int squaredTotal;
+int phase = 1;
 vector<bool> threadsStatus;
 matrix matrixToSort;
 pthread_mutex_t mutex_lock;
 pthread_cond_t controlVar;
-
-struct sort_arguments {
-    long id;
-    int length;
-    vector<bool> boolVector;
-    /* int** arr; */
-    vector<vector<int> > matrix;
-};
-
-
-/* Given a file, open the file, if there is an error opening the file, exit. Else, rewind */
-/* to the beginning of the file */
-/* Parameters: */
-    /* FILE *input - file to validate */
-/* Returns: */
-    /* 0 or EXIT_FAILURE, returns EXIT_FAILURE if an error occured */
-/* int _prepare_file(string filename) { */
-/*     if(!input) { */
-/*         printf("Error opening file.\n"); */
-/*         return EXIT_FAILURE; */
-/*     } */
-/*     rewind(input); */
-/*     return 0; */
-/* } */
 
 
 /* Given a file, return the number of ints a file */
@@ -132,16 +109,16 @@ bool is_sorted(matrix m) {
 }
 
 
-void sort_row(int rowToSort, matrix m) {
+void sort_row(int rowToSort) {
     for(int row = 0; row < squaredTotal - 1; ++row) {
         for(int col = 0; col < squaredTotal - row - 1; ++col) {
             if(rowToSort % 2 == 0) {
-                if(m[rowToSort][col] > m[rowToSort][col + 1]) {
-                    swap(m[rowToSort][col], m[rowToSort][col + 1]);
+                if(matrixToSort[rowToSort][col] > matrixToSort[rowToSort][col + 1]) {
+                    swap(matrixToSort[rowToSort][col], matrixToSort[rowToSort][col + 1]);
                 }
             } else {
-                if(m[rowToSort][col] < m[rowToSort][col + 1]) {
-                    swap(m[rowToSort][col], m[rowToSort][col + 1]);
+                if(matrixToSort[rowToSort][col] < matrixToSort[rowToSort][col + 1]) {
+                    swap(matrixToSort[rowToSort][col], matrixToSort[rowToSort][col + 1]);
                 }
             }
         }
@@ -149,31 +126,51 @@ void sort_row(int rowToSort, matrix m) {
 }
 
 
-void sort_col(int colToSort, matrix m) {
+void sort_col(int colToSort) {
     for(int row = 0; row < squaredTotal - 1; ++row) {
-        for(int col = 0; col < squaredTotal - row - 1; ++row) {
-            if(m[col][colToSort] > m[col + 1][colToSort]) {
-                swap(m[col][colToSort], m[col][colToSort]);
+        for(int col = 0; col < squaredTotal - row - 1; ++col) {
+            if(matrixToSort[col][colToSort] > matrixToSort[col + 1][colToSort]) {
+                swap(matrixToSort[col][colToSort], matrixToSort[col + 1][colToSort]);
             }
         }
     }
 }
 
 
-void *sort(void *arguments) {
-    struct sort_arguments *args = (struct sort_arguments *)arguments;
-    pthread_mutex_lock(&mutex_lock);
-    cout << "This is thread id: " << args -> id << "\n";
-    while(phase != 0) {
-        printf("CALLING SORT FUNCTION\n");
-        if(phase % 2 == 0) {
-            sort_row(args -> id, args -> matrix);
-        } else {
-            sort_col(args -> id, args -> matrix);
+/* Prints the values in a 2d array pictorially */
+/* Parameters: */
+/*     int* arr[squaredTotal] - The array to print the values of */
+void print_matrix(matrix m) {
+    matrix::iterator row;
+    vector<int>::iterator col;
+    for(int row = 0; row < squaredTotal; ++row) {
+        for(int col = 0; col < squaredTotal; ++col) {
+            cout << m[row][col] << " ,";
         }
-        cout << "modifying threadsStatus " << args -> id << "\n";
-        threadsStatus[args -> id] = true;
-        cout << "modified value" << threadsStatus[args -> id] << "\n";
+        cout << "\n";
+    }
+    printf("\n");
+}
+
+
+void print_vector(vector<bool> v) {
+    for(vector<bool>::const_iterator i = v.begin(); i!= v.end(); ++i) {
+        cout << *i << ' ';
+    }
+}
+
+
+void *sort(void* arg) {
+    long temp = (long)arg;
+    int id = (int)temp;
+    pthread_mutex_lock(&mutex_lock);
+    while(phase != 0) {
+        if(phase % 2 == 0) {
+            sort_col(id);
+        } else {
+            sort_row(id);
+        }
+        threadsStatus[id] = true;
         pthread_cond_wait(&controlVar, &mutex_lock);
     }
     pthread_mutex_unlock(&mutex_lock);
@@ -196,29 +193,6 @@ bool threads_complete(vector<bool> v) {
 }
 
 
-void print_vector(vector<bool> v) {
-    for(vector<bool>::const_iterator i = v.begin(); i!= v.end(); ++i) {
-        cout << *i << ' ';
-    }
-}
-
-
-/* Prints the values in a 2d array pictorially */
-/* Parameters: */
-/*     int* arr[squaredTotal] - The array to print the values of */
-void print_matrix(matrix m) {
-    matrix::iterator row;
-    vector<int>::iterator col;
-    for(int row = 0; row < squaredTotal; ++row) {
-        for(int col = 0; col < squaredTotal; ++col) {
-            cout << m[row][col] << " ,";
-        }
-        cout << "\n";
-    }
-    printf("\n");
-}
-
-
 int main(int argc, char *argv[]) {
     /* Populate 2d array from file */
     string filename = "input.txt";
@@ -232,16 +206,12 @@ int main(int argc, char *argv[]) {
     /* Create n amount of threads */
     threadsStatus.resize(squaredTotal);
     fill(threadsStatus.begin(), threadsStatus.end(), false);
+    pthread_t threads[squaredTotal]; // might not need, could use var in for loop
     pthread_mutex_init(&mutex_lock, NULL);
     pthread_cond_init(&controlVar, NULL);
-    struct sort_arguments args;
-    args.length = squaredTotal;
-    pthread_t threads[squaredTotal]; // might not need, could use var in for loop
     for(long curThread = 0; curThread < squaredTotal; ++curThread) {
-        args.matrix = matrixToSort;
-        args.id = curThread;
-        if((pthread_create(&threads[curThread], NULL, &sort, (void *)&args)) != 0) {
-            /* printf("Error creating thread number: %d\n", curThread); */
+        if((pthread_create(&threads[curThread], NULL, sort, (void *)curThread)) != 0) {
+            cout << "Error creating thread: " << curThread << "\n";
             return EXIT_FAILURE;
         }
     }
@@ -249,15 +219,9 @@ int main(int argc, char *argv[]) {
     /* Sort until the array is sorted properly */
     phase = 1;
     while(!is_sorted(matrixToSort)) {
-        numSorted = 0;
-        while(!threads_complete(threadsStatus)) {
-            /* print_vector(threadsStatus); */
-        }
-            pthread_mutex_lock(&mutex_lock);
-            pthread_cond_broadcast(&controlVar);
-            pthread_mutex_unlock(&mutex_lock);
-        ++phase;
+        while(!threads_complete(threadsStatus)) {}
         printf("Phase %d\n", phase);
+        ++phase;
         print_matrix(matrixToSort);
         fill(threadsStatus.begin(), threadsStatus.end(), false);
         pthread_mutex_lock(&mutex_lock);
