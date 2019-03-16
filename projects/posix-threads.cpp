@@ -191,8 +191,8 @@ void print_array(int** arr) {
         }
         printf("\n");
     }
-    printf("\n");
     cout << "AT THE END OF PRINT ARRAY";
+    printf("\n");
 }
 
 
@@ -213,7 +213,7 @@ int main(int argc, char *argv[]) {
     print_array(arrToSort);
 
     /* Create n amount of threads */
-    threadsStatus.resize(squaredTotal);
+    threadsStatus.resize(pow(squaredTotal, 2));
     fill(threadsStatus.begin(), threadsStatus.end(), false);
     print_vector(threadsStatus);
     struct sort_arguments args;
@@ -223,6 +223,8 @@ int main(int argc, char *argv[]) {
     for(int curThread = 0; curThread < squaredTotal; ++curThread) {
         args.arr = arrToSort;
         args.id = curThread;
+        cout << "\nRESIZED THREADSTATUS";
+        cout << "\n";
         if((pthread_create(&threads[curThread], NULL, &sort, (void *)&args)) != 0) {
             printf("Error creating thread number: %d\n", curThread);
             return EXIT_FAILURE;
