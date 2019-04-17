@@ -147,8 +147,6 @@ void sort_col(int colToSort) {
 /* Parameters: */
 /*     matrix m - The matrix to print the values of */
 void print_matrix(matrix m) {
-    matrix::iterator row;
-    vector<int>::iterator col;
     for(int row = 0; row < squaredTotal; ++row) {
         for(int col = 0; col < squaredTotal - 1; ++col) {
             cout << m[row][col] << ", ";
