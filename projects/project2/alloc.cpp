@@ -23,12 +23,12 @@ char * fileData;
 
 int main(void) {
     proccessRes((char*)("res.txt"));
-    cout << "file data:\n" << fileData << endl;
+    cout << "File data:\n" << fileData << endl;
 
     /* Ask how many units of a resource type is needed */
     bool resourceRequestComplete = false;
     char userInput;
-    do {
+    while (!resourceRequestComplete) {
         cout << "Would you like to make a request to specify desired units of a resource type? (y/n) ";
         cin >> userInput;
         if (userInput == 'y') {
@@ -46,7 +46,7 @@ int main(void) {
         } else {
             cout << "Invalid input. Answer with \'y\' indicating yes, or \'n\' indicating no." << endl;
         }
-    } while (!resourceRequestComplete);
+    }
 
     return EXIT_SUCCESS;
 }
@@ -91,6 +91,9 @@ void listResourceTypes() {
     cout << "=================================================" << endl;
 }
 
+/* Compares given resource to find with resources found in memory mapped file. */
+/* Returns true if the given resource is found in the memory mapped file, false otherwise */
+/* @returns bool */
 bool resourceExists(int resourceToFind) {
     for(int resource = 0; resource < numResources; ++resource) {
         if (resourceToFind == fileData[resource * resRowLength]) {
