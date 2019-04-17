@@ -47,7 +47,7 @@ size. To this end, you can use the `fstat()` system call to get the file size)
 
 * In a loop, it keeps asking how many units of a resource type is needed.
 * Once entered, it subtracts the units from that resource type (if available), and then
-invokes system call msync() to synchronize the content of the mapped file with the physical file.
+invokes system call `msync()` to synchronize the content of the mapped file with the physical file.
 
 3. The file __prov-rep.cpp__ creates a Child process (so there are 2 processes):
     * The parent process:
