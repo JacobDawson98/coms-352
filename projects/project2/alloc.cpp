@@ -19,9 +19,14 @@ int main(void) {
             cout << "Which resource type would you like to make a request from?" << endl;
             printMappedFile();
             cin >> userInput;
+
+            semWait();
             resourceIndex = getResourceIndex(userInput);
-            if (resourceIndex != -1) {
+            semSignal();
+            if (resourceIndex != EXIT_FAILURE) {
+                semWait();
                 unitsAvailableForResource = fileData[resourceIndex + 2] - '0';
+                semSignal();
                 cout << "How much of resource " << userInput << " would you like to allocate? (There is/are currently " << unitsAvailableForResource << " units available)." << endl;
                 cin >> desiredUnits;
                 if (desiredUnits > unitsAvailableForResource) {
@@ -29,10 +34,14 @@ int main(void) {
                 } else {
                     unitsAvailableForResource = unitsAvailableForResource - desiredUnits;
                     cout << "Units available for resource " << userInput << " is now " << unitsAvailableForResource << endl;
+                    /* semWait(); */
+                    /* modify units for available resource */
+                    /* semSignal(); */
                 }
             } else {
                 cout << "Resources " << userInput << " was not found." << endl;
             }
+
         } else if (userInput == 'n') {
             resourceRequestComplete = true;
         } else {

@@ -29,7 +29,8 @@ int semid, semid_prov, semid_rep;
 struct sembuf w, s;
 union semUn semaphoreUnion;
 
-int getResourceIndex(int resourceToFind), initSemaphore(), mapFileToMemory(char* filename);
+int getResourceIndex(int resourceToFind), mapFileToMemory(char* filename),
+    initSemaphore(), semWait(), semSignal();
 void printMappedFile();
 
 /* Opens the passed in name of a file and maps it to a memory region */
@@ -70,7 +71,7 @@ int getResourceIndex(int resourceToFind) {
             return resource * resRowLength;
         }
     }
-    return -1;
+    return EXIT_FAILURE;
 }
 
 /* Pretty prints file that is mapped to memory */
@@ -83,21 +84,38 @@ void printMappedFile() {
 
 /* Initialize sempahore */
 int initSemaphore() {
-    w = {0, -1, 0}; // semwait
-    s = {0, 1, 0}; // semsignal
+    /* The assigning of w and s here only work only big daddy linux */
+    w = { 0, -1, 0 }; // semwait
+    s = { 0, +1, 0 }; // semsignal
 
     /* Create semaphore */
     if ((semid = semget(KEY_alloc, 1, 0666 | IPC_CREAT)) < 0) {
         cout << "Unable to create semaphore" << endl;
-        return -1;
+        return EXIT_FAILURE;
     }
 
-    /* Initialize semaphore */
+    /* Initialize semaphore to a counter of 1 in parent */
     semaphoreUnion.val = 1;
     if (semctl(semid, 0, SETVAL, semaphoreUnion) < 0) {
         cout << "Unable to initialize semaphore." << endl;
-        return -1;
+        return EXIT_FAILURE;
     }
 
-    return 0;
+    return EXIT_SUCCESS;
+}
+
+/* Set the semaphore to wait */
+int semWait() {
+    if (semop(semid, &w, 1) < 0) {
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
+}
+
+/* Signal sempahore */
+int semSignal() {
+    if (semop(semid, &s, 1) < 0) {
+        return EXIT_FAILURE;
+    }
+    return EXIT_SUCCESS;
 }
