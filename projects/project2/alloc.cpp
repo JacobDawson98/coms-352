@@ -15,7 +15,7 @@ using namespace std;
 
 int proccessRes(char* filename);
 void listResourceTypes();
-bool resourceExists(int resourceToFind);
+int getResourceIndex(int resourceToFind);
 
 int numResources, resRowLength = 4, fileDes = 0;
 struct stat fileInfo;
@@ -24,24 +24,34 @@ char * fileData;
 int main(void) {
     proccessRes((char*)("res.txt"));
     cout << "File data:\n" << fileData << endl;
+    int resourceIndex = -1, unitsAvailableForResource = -1;
 
-    /* Ask how many units of a resource type is needed */
+    /* Ask how many units of a resource type the user wishes to allocate*/
     bool resourceRequestComplete = false;
-    char userInput;
     while (!resourceRequestComplete) {
+        char userInput;
+        int desiredUnits;
         cout << "Would you like to make a request to specify desired units of a resource type? (y/n) ";
         cin >> userInput;
         if (userInput == 'y') {
             cout << "\nWhich resource type would you like to make a request from?" << endl;
             listResourceTypes();
             cin >> userInput;
-            if (resourceExists(userInput)) {
-                cout << "Resource exists buddy" << endl;
+            resourceIndex = getResourceIndex(userInput);
+            if (resourceIndex != -1) {
+                unitsAvailableForResource = fileData[resourceIndex + 2] - '0';
+                cout << "How much of resource " << userInput << " would you like to allocate? (There is/are currently " << unitsAvailableForResource << " units available)." << endl;
+                cin >> desiredUnits;
+                if (desiredUnits > unitsAvailableForResource) {
+                    cout << "You requested too many units from resource " << userInput << ". Resource " << userInput << " has " << unitsAvailableForResource << " resources." << endl;
+                } else {
+                    unitsAvailableForResource = unitsAvailableForResource - desiredUnits;
+                    cout << "Units available for resource " << userInput << " is now " << unitsAvailableForResource << endl;
+                }
             } else {
-                cout << "no tengo resource" << endl;
+                cout << "Resources " << userInput << " was not found." << endl;
             }
         } else if (userInput == 'n') {
-            cout << "no" << endl;
             resourceRequestComplete = true;
         } else {
             cout << "Invalid input. Answer with \'y\' indicating yes, or \'n\' indicating no." << endl;
@@ -92,13 +102,14 @@ void listResourceTypes() {
 }
 
 /* Compares given resource to find with resources found in memory mapped file. */
-/* Returns true if the given resource is found in the memory mapped file, false otherwise */
-/* @returns bool */
-bool resourceExists(int resourceToFind) {
+/* Returns the index of the given resource if it is found in the memory mapped file. */
+/* Returns -1 otherwise. */
+/* @returns int index - the index of the desired resource, -1 if resource is not found. */
+int getResourceIndex(int resourceToFind) {
     for(int resource = 0; resource < numResources; ++resource) {
         if (resourceToFind == fileData[resource * resRowLength]) {
-            return true;
+            return resource * resRowLength;
         }
     }
-    return false;
+    return -1;
 }
