@@ -48,24 +48,25 @@ size. To this end, you can use the `fstat()` system call to get the file size)
 * In a loop, it keeps asking how many units of a resource type is needed.
 * Once entered, it subtracts the units from that resource type (if available), and then
 invokes system call msync() to synchronize the content of the mapped file with the physical file.
-  * The file __prov-rep.cpp__ creates a Child process (so there are 2 processes):
-      * The parent process:
-          * opens the file __res.txt__ and maps it to a memory region (before forking the child
-          process).
-          * The parent process also acts as a _provider_ of resources.
-          * In a loop, it keeps asking whether new resources need to be added.
-          * If yes,
-              * it receives from the user input, the resource type and the number of units, and
-              adds them to the memory region.
-          * Once added, using system call `msync()`, it synchronizes the content of the memory
-          region with the physical file.
-      * The child process:
-        * The child process is a reporter and reports _three things_ every 10 seconds:
-            * The page size of the system using the system call `getpagesize()`.
-            * The current state of resources.
-            * The current status of pages in the memory region using the system call `mincore()`
-            (i.e., whether pages of the calling process’s virtual memory are resident in core
-            (RAM), and so will not cause a disk access (page fault) if referenced.)
+
+3. The file __prov-rep.cpp__ creates a Child process (so there are 2 processes):
+    * The parent process:
+        * opens the file __res.txt__ and maps it to a memory region (before forking the child
+        process).
+        * The parent process also acts as a _provider_ of resources.
+        * In a loop, it keeps asking whether new resources need to be added.
+        * If yes,
+            * it receives from the user input, the resource type and the number of units, and
+            adds them to the memory region.
+        * Once added, using system call `msync()`, it synchronizes the content of the memory
+        region with the physical file.
+    * The child process:
+      * The child process is a reporter and reports _three things_ every 10 seconds:
+          * The page size of the system using the system call `getpagesize()`.
+          * The current state of resources.
+          * The current status of pages in the memory region using the system call `mincore()`
+          (i.e., whether pages of the calling process’s virtual memory are resident in core
+          (RAM), and so will not cause a disk access (page fault) if referenced.)
 
 Finally, notice that the memory mapped file itself is a shared resource and, hence, _access to
 it must be mutually exclusive._
