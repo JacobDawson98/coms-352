@@ -33,10 +33,10 @@ int main(void) {
                     cout << "You requested too many units from resource " << userInput << ". Resource " << userInput << " has " << unitsAvailableForResource << " resources." << endl;
                 } else {
                     unitsAvailableForResource = unitsAvailableForResource - desiredUnits;
+                    semWait();
+                    msync(fileData, fileInfo.st_size, MS_SYNC); // not currently working
+                    semSignal();
                     cout << "Units available for resource " << userInput << " is now " << unitsAvailableForResource << endl;
-                    /* semWait(); */
-                    /* modify units for available resource */
-                    /* semSignal(); */
                 }
             } else {
                 cout << "Resources " << userInput << " was not found." << endl;
