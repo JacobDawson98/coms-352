@@ -5,7 +5,7 @@
 
 
 int main(void) {
-    mapFileToMemory((char*)("res.txt"));
+    mapFileToMemory(filename);
     int resourceIndex = -1, unitsAvailableForResource = -1;
 
     /* Ask how many units of a resource type the user wishes to allocate*/
@@ -17,7 +17,9 @@ int main(void) {
         cin >> userInput;
         if (userInput == 'y') {
             cout << "Which resource type would you like to make a request from?" << endl;
+            semWait();
             printMappedFile();
+            semSignal();
             cin >> userInput;
 
             semWait();

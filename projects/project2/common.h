@@ -16,7 +16,8 @@
 using namespace std;
 
 int numResources = -1, resRowLength = 4;
-char * fileData;
+char* fileData;
+char* filename = (char*)"res.txt";
 struct stat fileInfo;
 
 /* semaphore variables */
@@ -64,7 +65,7 @@ int mapFileToMemory(char* filename) {
 /* @returns int index - the index of the desired resource, -1 if resource is not found. */
 int getResourceIndex(int resourceToFind) {
     if (numResources == -1) {
-        mapFileToMemory((char *)("res.txt"));
+        mapFileToMemory(filename);
     }
     for(int resource = 0; resource < numResources; ++resource) {
         if (resourceToFind == fileData[resource * resRowLength]) {
@@ -77,14 +78,14 @@ int getResourceIndex(int resourceToFind) {
 /* Pretty prints file that is mapped to memory */
 void printMappedFile() {
     if (numResources == -1) {
-        mapFileToMemory((char *)("res.txt"));
+        mapFileToMemory(filename);
     }
     cout << "\nR       U\n=========\n" << fileData << endl;
 }
 
 /* Initialize sempahore */
 int initSemaphore() {
-    /* The assigning of w and s here only work only big daddy linux */
+    /* The assigning of w and s here only work on big daddy linux */
     w = { 0, -1, 0 }; // semwait
     s = { 0, +1, 0 }; // semsignal
 
