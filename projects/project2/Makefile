@@ -4,3 +4,4 @@ make:
 
 clean:
 	rm -f alloc.out
+	rm -f prov-rep.out
