@@ -14,15 +14,32 @@ int main(void) {
 
     int pid = fork();
     if (pid == REPORTER) {
-
+        bool isFirstRun = true;
+        clock_t now = clock(), previous = now;
+        unsigned char* vec = (unsigned char*)calloc(1, (fileInfo.st_size + getpagesize() - 1)/getpagesize());
+        while (true) {
+            now = clock();
+            if ((double)(now - previous) >= 10 * CLOCKS_PER_SEC ||
+                (isFirstRun && (double)(now - previous) >= 0.25 * CLOCKS_PER_SEC))  {
+                isFirstRun = false;
+                previous = clock();
+                int pagesize = getpagesize();
+                cout << "Stats:\nPage size: " << pagesize << endl;
+                cout << "Mapped File & mincore output:" << endl;
+                semWait();
+                printMappedFile();
+                mincore(fileData, fileInfo.st_size, vec);
+                semSignal();
+                for(int block = 0; block <= sizeof(vec)/sizeof(*vec); ++block) {
+                    if (vec[block] & 1) {
+                        cout << "Block: " << block << endl;
+                    }
+                }
+                cout << "\n\n";
+            }
+        }
     } else { /* Provider process (the parent process) */
-        /* * In a loop, it keeps asking whether new resources need to be added. */
-        /* * If yes, */
-        /* * it receives from the user input, the resource type and the number of units, and */
-        /*   adds them to the memory region. */
-        /*   Once added, using system call `msync()`, it synchronizes the content of the memory */
-        /* region with the physical file. */
-        int resourceIndex = -1, unitsAvailableForResource = -1;
+        int resourceIndex = EXIT_FAILURE, unitsAvailableForResource = EXIT_FAILURE;
         bool resourceRequestComplete = false;
         while(!resourceRequestComplete) {
             char userInput;
@@ -35,7 +52,6 @@ int main(void) {
                 printMappedFile();
                 semSignal();
                 cin >> userInput;
-
                 semWait();
                 resourceIndex = getResourceIndex(userInput);
                 semSignal();

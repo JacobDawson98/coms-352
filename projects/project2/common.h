@@ -7,6 +7,7 @@
 #include <sys/sem.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 #define KEY_alloc 0x1111
