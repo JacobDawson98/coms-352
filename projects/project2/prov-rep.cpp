@@ -64,6 +64,8 @@ int main(void) {
                     msync(fileData, fileInfo.st_size, MS_SYNC);
                     semSignal();
                 }
+            } else {
+                resourceRequestComplete = true;
             }
         }
     }
