@@ -5,6 +5,9 @@
 
 
 int main(void) {
+    if (initSemaphore() == EXIT_FAILURE) {
+        return EXIT_FAILURE;
+    }
     mapFileToMemory(filename);
     int resourceIndex = -1, unitsAvailableForResource = -1;
 
