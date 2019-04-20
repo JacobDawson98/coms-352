@@ -1,7 +1,7 @@
 /* Author: Jacob Dawson */
 /* COM S 352 Project 2 */
 
-#include "common.h"
+#include "memory-map-helpers.h"
 #define REPORTER 0
 
 int main(void) {
