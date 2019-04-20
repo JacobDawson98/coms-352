@@ -13,6 +13,7 @@ int main(void) {
     }
 
     int pid = fork();
+    pid_t reporter_pid = REPORTER;
     if (pid == REPORTER) {
         bool isFirstRun = true;
         clock_t now = clock(), previous = now;
@@ -66,6 +67,7 @@ int main(void) {
                 }
             } else {
                 resourceRequestComplete = true;
+                kill(reporter_pid, SIGKILL);
             }
         }
     }

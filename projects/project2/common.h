@@ -1,6 +1,7 @@
 #include <iostream>
 #include <fcntl.h>
 #include <fstream>
+#include <signal.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string>
