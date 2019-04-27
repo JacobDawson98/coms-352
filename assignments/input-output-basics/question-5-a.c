@@ -2,6 +2,7 @@
 /* Open and read the characters of the fierst file one character at a time, convert all */
 /* the characters to uppercase and write the characters to the second file, and then close the */
 /* files. Print out the time spent for the conversion */
+#include <ctype.h>
 #include <fcntl.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -9,8 +10,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <time.h>
+#include <unistd.h>
 
-#define MAX_PATH_LENGTH 50
+#define MAX_PATH_LENGTH 200
 
 int main(void) {
     int fdRead, fdWrite;
@@ -29,9 +31,10 @@ int main(void) {
         perror("Could not write to file");
     }
     clock_t begin = clock();
-    char charRead;
+    char charRead, temp;
     while (read(fdRead, &charRead, 1) != 0) {
-        write(fdWrite, &charRead, 1);
+        temp = toupper(charRead);
+        write(fdWrite, &temp, 1);
     }
     clock_t end = clock();
     printf("Total time spent was %lf seconds.\n", (double)(end - begin) / CLOCKS_PER_SEC);
