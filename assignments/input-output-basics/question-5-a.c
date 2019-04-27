@@ -37,7 +37,7 @@ int main(void) {
         write(fdWrite, &temp, 1);
     }
     clock_t end = clock();
-    printf("Total time spent was %lf seconds.\n", (double)(end - begin) / CLOCKS_PER_SEC);
+    printf("Total time spent was %f seconds.\n", (double)(end - begin) / CLOCKS_PER_SEC);
     close(fdRead);
     close(fdWrite);
 }
